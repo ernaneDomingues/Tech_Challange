@@ -92,8 +92,7 @@ def save_to_csv(df, filename):
     df.to_csv(filename, index=False)
 
 
-if __name__=='__main__':
-    
+if __name__=='__main__':    
     # Função principal para extrair dados de todos os URLs
     def extract_and_save_all_data(url_templates, start_year, end_year):
         for url_template in url_templates:
@@ -101,6 +100,7 @@ if __name__=='__main__':
             if not all_data.empty:
                 headers = get_table_headers(url_template, end_year)
                 filename = get_filename_from_page(end_year, url_template)
+                all_data = pivot_dataframe(all_data, headers)
                 if filename:
                     save_to_csv(all_data, filename)
                     print(f"Dados salvos em {filename}")
