@@ -11,6 +11,17 @@ class Processamento(ProcessamentoBase):
     class Config:
         orm_mode = True
 
+class ProducaoBase(BaseModel):
+    produto: str
+    quantidade: float
+    data: str        
+
+class Producao(ProducaoBase):
+    id: int
+
+    class Config:
+        orm_mode = True        
+
 class ComercializacaoBase(BaseModel):
     produto: str
     quantidade: float

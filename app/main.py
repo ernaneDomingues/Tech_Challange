@@ -3,12 +3,9 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from .database import engine
-from . import models, schemas, crud
-from .auth import create_access_token, get_current_user, get_db, authenticate_user, ACCESS_TOKEN_EXPIRE_MINUTES
-from .routers import producao, processamento, comercializacao, importacao, exportacao
-
-models.Base.metadata.create_all(bind=engine)
+from app import schemas
+from app.auth import ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user, create_access_token
+from app.routers import comercializacao, exportacao, importacao, processamento, producao
 
 app = FastAPI(
     title="API EMBRAPA",
@@ -18,6 +15,10 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
+
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
 
 @app.post("/token", response_model=schemas.Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
