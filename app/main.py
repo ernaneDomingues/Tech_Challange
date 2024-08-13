@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app import schemas
 from app.auth import ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user, create_access_token, get_db
-from app.routers import producao
+from app.routers import comercializacao, exportacao, importacao, processamento, producao
 
 app = FastAPI(
     title="API EMBRAPA",
@@ -18,7 +18,11 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
-@app.post("/token", response_model=schemas.Token)
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
+
+@app.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
@@ -34,7 +38,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 app.include_router(producao.router)
-# app.include_router(processamento.router)
-# app.include_router(comercializacao.router)
-# app.include_router(importacao.router)
-# app.include_router(exportacao.router)
+app.include_router(processamento.router)
+app.include_router(comercializacao.router)
+app.include_router(importacao.router)
+app.include_router(exportacao.router)
