@@ -1,4 +1,6 @@
 from os import sys, path, environ
+
+from fastapi.security import OAuth2PasswordBearer
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from datetime import datetime
 from typing import Optional
@@ -9,11 +11,12 @@ from app import auth, schemas
 
 from models.extraction import extract_table_all_data, extract_table_data
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 router = APIRouter(
     prefix="/producao",
     tags=["Producao"],
-    dependencies=[Depends(auth.get_current_user)],
+    dependencies=[Depends(oauth2_scheme)],
 )
 
 ANO = 2023
@@ -26,6 +29,6 @@ def read_producao_date(
     end_year: int = Query(...)):
     return extract_table_all_data(URL_TEMPLATE, start_year, end_year)
     
-@router.get("/", response_model=list[schemas.Producao])
+@router.get("/")
 def read_producao():
     return extract_table_data(URL_TEMPLATE, ANO)

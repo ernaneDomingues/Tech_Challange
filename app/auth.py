@@ -8,6 +8,8 @@ from . import schemas, models, crud, database
 
 SECRET_KEY = "embrapa_fiap"
 ALGORITHM = "HS256"
+USERNAME = "embrap_fiap"
+PASSWORD = "*U#!J)DS"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -42,18 +44,14 @@ async def get_current_user(db: Session = Depends(get_db), token: str = Depends(o
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = crud.get_user_by_username(db, username=username)
-    if user is None:
-        raise credentials_exception
+
     return user
 
 def authenticate_user(db: Session, username: str, password: str):
-    user = crud.get_user_by_username(db, username)
-    if not user:
+    if username == USERNAME and password == PASSWORD:
+        return True
+    else:
         return False
-    if not verify_password(password, user.hashed_password):
-        return False
-    return user
 
 # Verificar senha
 def verify_password(plain_password, hashed_password):

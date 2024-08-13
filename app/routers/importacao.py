@@ -1,14 +1,17 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from models.extraction import extract_table_all_data, extract_table_data
 from .. import models, schemas, crud, database, auth
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
 router = APIRouter(
     prefix="/importacao",
     tags=["Importacao"],
-    dependencies=[Depends(auth.get_current_user)],
+    dependencies=[Depends(oauth2_scheme)],
 )
 
 ANO = 2023
