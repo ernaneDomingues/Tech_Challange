@@ -35,26 +35,47 @@ def parse_table_content_with_category(content):
     soup = BeautifulSoup(content, 'html.parser')
     table = soup.find('table', class_='tb_base tb_dados')
     headers = [header.text.strip() for header in table.find_all('th')]
-    headers.insert(0, 'Categoria')
     rows = []
+    
+    if 'Países' not in headers:
+        headers.insert(0, 'Categoria')
+        current_category = None
 
-    current_category = None
+        for row in table.find_all('tr'):
+            cells = row.find_all('td')
 
-    for row in table.find_all('tr'):
-        cells = row.find_all('td')
+            if len(cells) == 2:
+                product = cells[0].text.strip()
+                quantity = cells[1].text.strip().replace('.', '').replace('-', '0')
+                quantity = int(quantity) if quantity.isdigit() else 0
 
-        if len(cells) == 2:
-            product = cells[0].text.strip()
-            quantity = cells[1].text.strip().replace('.', '').replace('-', '0')
-            quantity = int(quantity) if quantity.isdigit() else 0
+                # Verifica se o texto está em maiúsculas e não contém números
+                if product.isupper() and not any(c.isdigit() for c in product):
+                    # Se for uma linha de soma total, assume como a categoria atual
+                    current_category = product
+                else:
+                    # Adiciona a linha ao DataFrame com a categoria atual
+                    rows.append([current_category, product, quantity])
+    else:
+        current_category = None
 
-            # Verifica se o texto está em maiúsculas e não contém números
-            if product.isupper() and not any(c.isdigit() for c in product):
-                # Se for uma linha de soma total, assume como a categoria atual
-                current_category = product
+        for row in table.find_all('tr')[1:]:
+            cells = row.find_all('td')
+            if len(cells) == 2:
+                product = cells[0].text.strip()
+                quantity = cells[1].text.strip().replace('.', '').replace('-', '0')
+                quantity = int(quantity) if quantity.isdigit() else 0
+
+                # Verifica se o texto está em maiúsculas e não contém números
+                if product.isupper() and not any(c.isdigit() for c in product):
+                    # Se for uma linha de soma total, assume como a categoria atual
+                    current_category = product
+                else:
+                    # Adiciona a linha ao DataFrame com a categoria atual
+                    rows.append([current_category, product, quantity])
             else:
-                # Adiciona a linha ao DataFrame com a categoria atual
-                rows.append([current_category, product, quantity])
+                row_data = [cell.text.strip().replace('.', '').replace('-', '0') for cell in cells]
+                rows.append(row_data)
 
     return headers, rows
 

@@ -1,3 +1,5 @@
+from os import sys, path, environ
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, Query
@@ -5,7 +7,8 @@ from sqlalchemy.orm import Session
 
 from app import auth, schemas
 
-from app.models import extraction
+from models.extraction import extract_table_all_data, extract_table_data
+
 
 router = APIRouter(
     prefix="/producao",

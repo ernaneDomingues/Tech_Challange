@@ -1,3 +1,5 @@
+from os import sys, path, environ
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, Query

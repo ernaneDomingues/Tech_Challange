@@ -1,3 +1,5 @@
+from os import sys, path, environ
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from datetime import timedelta
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
