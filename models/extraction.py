@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime
 
 START_YEAR = 1970
-END_YEAR = datetime.now().year
+END_YEAR = datetime.now().year - 1
 
 # URLs base para cada tipo de tabela
 URL_TEMPLATES = [
@@ -31,50 +31,36 @@ def fetch_page_content(url):
     response.raise_for_status()
     return response.content
 
-def parse_table_content(content):
+def parse_table_content_with_category(content):
     soup = BeautifulSoup(content, 'html.parser')
     table = soup.find('table', class_='tb_base tb_dados')
     headers = [header.text.strip() for header in table.find_all('th')]
-    rows = [
-        [cell.text.strip() for cell in row.find_all('td')]
-        for row in table.find_all('tr')[1:]
-    ]
+    headers.insert(0, 'Categoria')
+    rows = []
+
+    current_category = None
+
+    for row in table.find_all('tr'):
+        cells = row.find_all('td')
+
+        if len(cells) == 2:
+            product = cells[0].text.strip()
+            quantity = cells[1].text.strip().replace('.', '').replace('-', '0')
+            quantity = int(quantity) if quantity.isdigit() else 0
+
+            # Verifica se o texto está em maiúsculas e não contém números
+            if product.isupper() and not any(c.isdigit() for c in product):
+                # Se for uma linha de soma total, assume como a categoria atual
+                current_category = product
+            else:
+                # Adiciona a linha ao DataFrame com a categoria atual
+                rows.append([current_category, product, quantity])
+
     return headers, rows
-
-def extract_table_data(url, year):
-    try:
-        content = fetch_page_content(url)
-        headers, rows = parse_table_content(content)
-        df = pd.DataFrame(rows, columns=headers)
-        df['Ano'] = year
-        return df
-    except Exception as e:
-        print(f"Erro ao extrair dados do ano {year}: {e}")
-        return pd.DataFrame()
-
-def extract_table_all_data(url_template, start_year, end_year):
-    all_data = pd.DataFrame()
-    for year in range(start_year, end_year + 1):
-        url = url_template.format(year=year)
-        year_data = extract_table_data(url, year)
-        if not year_data.empty:
-            all_data = pd.concat([all_data, year_data], ignore_index=True)
-            print(f"Dados do ano {year} extraídos com sucesso.")
-    return all_data
-
-def pivot_dataframe(df, columns):
-    if not all(col in df.columns for col in columns):
-        raise ValueError("Uma ou mais colunas especificadas não estão presentes no DataFrame")
-    for col in columns[1:]:
-        df[col] = pd.to_numeric(df[col], errors='coerce')
-    df_pivot = df.pivot_table(index='Ano', columns=columns[0], values=columns[1:], aggfunc='sum')
-    df_pivot.columns = ['_'.join(col).strip() for col in df_pivot.columns.values]
-    df_pivot.reset_index(inplace=True)
-    return df_pivot
 
 def get_table_headers(url, end_year):
     content = fetch_page_content(url.format(year=end_year))
-    headers, _ = parse_table_content(content)
+    headers, _ = parse_table_content_with_category(content)
     return headers
 
 def get_filename_from_page(end_year, url):
@@ -91,6 +77,36 @@ def get_filename_from_page(end_year, url):
 def save_to_csv(df, filename):
     df.to_csv(filename, index=False)
 
+def standardize_column_name(column):
+    column = column.strip()  # Remove extra spaces
+    column = column.lower()  # Convert to lowercase
+    column = column.replace(' ', '_')  # Replace spaces with underscores
+    column = column.replace('(', '')  # Remove parentheses
+    column = column.replace(')', '')  # Remove parentheses
+    column = column.replace('.', '')  # Remove periods
+    return column
+
+def extract_table_data(url, year):
+    try:
+        content = fetch_page_content(url)
+        headers, rows = parse_table_content_with_category(content)
+        df = pd.DataFrame(rows, columns=headers)
+        df['Ano'] = year
+        df.columns = [standardize_column_name(col) for col in df.columns]
+        return df
+    except Exception as e:
+        print(f"Erro ao extrair dados do ano {year}: {e}")
+        return pd.DataFrame()
+
+def extract_table_all_data(url_template, start_year, end_year):
+    all_data = pd.DataFrame()
+    for year in range(start_year, end_year + 1):
+        url = url_template.format(year=year)
+        year_data = extract_table_data(url, year)
+        if not year_data.empty:
+            all_data = pd.concat([all_data, year_data], ignore_index=True)
+            print(f"Dados do ano {year} extraídos com sucesso.")
+    return all_data
 
 if __name__=='__main__':    
     # Função principal para extrair dados de todos os URLs
@@ -98,9 +114,7 @@ if __name__=='__main__':
         for url_template in url_templates:
             all_data = extract_table_all_data(url_template, start_year, end_year)
             if not all_data.empty:
-                headers = get_table_headers(url_template, end_year)
                 filename = get_filename_from_page(end_year, url_template)
-                all_data = pivot_dataframe(all_data, headers)
                 if filename:
                     save_to_csv(all_data, filename)
                     print(f"Dados salvos em {filename}")
