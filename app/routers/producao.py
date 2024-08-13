@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app import auth, schemas
-from extraction import extract_table_all_data, extract_table_data
+
+from app.models import extraction
 
 router = APIRouter(
     prefix="/producao",

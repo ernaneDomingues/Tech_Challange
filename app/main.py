@@ -4,8 +4,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app import schemas
-from app.auth import ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user, create_access_token
-from app.routers import comercializacao, exportacao, importacao, processamento, producao
+from app.auth import ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user, create_access_token, get_db
+from app.routers import producao
 
 app = FastAPI(
     title="API EMBRAPA",
@@ -36,7 +36,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 app.include_router(producao.router)
-app.include_router(processamento.router)
-app.include_router(comercializacao.router)
-app.include_router(importacao.router)
-app.include_router(exportacao.router)
+# app.include_router(processamento.router)
+# app.include_router(comercializacao.router)
+# app.include_router(importacao.router)
+# app.include_router(exportacao.router)
